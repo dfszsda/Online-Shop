@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyShopping</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mini.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #E0E5DC; }
+    header { background-color: #333; color: white; padding: 1rem; text-align: center; position: relative; }
+    .navbar { background-color: #333; padding: 1rem; border-bottom: 1px solid #ddd; }
+    .nav-links { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .nav-links a { color: #d1d5db; padding: 0.5rem 1rem; text-decoration: none; }
+    .nav-links a:hover { color: #fff; }
+    .main-content { display: flex; margin: 2rem; gap: 2rem; }
+    .sidebar {
+      background: #FAF6ED; border: 1px solid #ddd; border-radius: 8px;
+      padding: 1rem; width: 200px; height: fit-content;
+    }
+    .sidebar h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .sidebar ul { list-style: none; padding: 0; }
+    .sidebar li { margin-bottom: 0.75rem; }
+    .sidebar a { text-decoration: none; color: #333; font-weight: 500; }
+    .sidebar a:hover { color: #28a745; }
+    .products {
+      display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 1rem; flex: 1;
+    }
+    .product {
+      background: #FAF6ED; border: 1px solid #ddd; border-radius: 8px; padding: 1rem;
+      width: 100%; max-width: 200px; min-width: 150px; text-align: center;
+    }
+    .product img { width: 100%; height: auto; border-radius: 4px; }
+    .product h3 { font-size: 1.125rem; margin: 0.5rem 0; }
+    .product p { font-size: 1rem; color: #555; }
+    .product button {
+      background: #28a745; color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;
+    }
+    .product button:hover { background: #218838; }
+    .hamburger { display: none; cursor: pointer; }
+    .hamburger div { width: 25px; height: 3px; background: white; margin: 5px; }
+    #cart, #confirmed-orders {
+      background: #fff; padding: 1rem; margin: 2rem auto;
+      border: 1px solid #ccc; border-radius: 8px; max-width: 600px;
+    }
+    #cart-items li, #confirmed-orders-list li {
+      display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0;
+    }
+    #confirm-btn, .download-btn, .clear-btn {
+      background: #007bff; color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin-top: 1rem; margin-right: 10px;
+    }
+    .clear-btn { background: #dc3545; }
+    .block-btn, .delete-owner-btn, .demote-btn {
+      background: #dc3545; color: white; border: none;
+      padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;
+    }
+    .block-btn:hover, .delete-owner-btn:hover, .demote-btn:hover { background: #c82333; }
+    .unblock-btn, .promote-btn {
+      background: #28a745; color: white; border: none;
+      padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;
+    }
+    .unblock-btn:hover, .promote-btn:hover { background: #218838; }
+    .search-container, .create-owner-container {
+      display: flex; gap: 0.5rem; margin-bottom: 1rem; justify-content: center;
+    }
+    #search-input, #order-search-input, #owner-name, #owner-email, #owner-phone {
+      flex: 1; max-width: 300px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;
+    }
+    .search-btn, .create-owner-btn {
+      background: #007bff; color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;
+    }
+    .search-btn:hover, .create-owner-btn:hover { background: #0056b3; }
+    .quantity-controls {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .quantity-btn {
+      background: #6b7280; color: white; border: none;
+      padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;
+    }
+    .quantity-btn:hover { background: #4b5563; }
+    #ownerPanel {
+      max-width: 1000px; margin: 0 auto; padding: 0 1rem;
+    }
+    #ownerPanel h1, #ownerPanel h2 {
+      text-align: center;
+    }
+    #ownerPanel .flex.items-center {
+      justify-content: center;
+    }
+    #ownerPanel .flex-wrap.gap-4 {
+      justify-content: center;
+    }
+    .nav-search-container {
+      display: flex; gap: 0.5rem; align-items: center; padding: 0.5rem;
+    }
+    #nav-search-input {
+      padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; background: #fff; color: #333;
+      width: 200px;
+    }
+    #nav-search-input::placeholder { color: #aaa; }
+    .nav-search-btn {
+      background: #28a745; color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;
+    }
+    .nav-search-btn:hover { background: #218838; }
+    .clear-search-btn {
+      background: #dc3545; color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;
+    }
+    .clear-search-btn:hover { background: #c82333; }
+    .delivery-btn {
+      background: #f0ad4e; color: white; border: none;
+      padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;
+    }
+    .delivery-btn:hover { background: #ec971f; }
+    .undelivered-btn {
+      background: #dc3545; color: white; border: none;
+      padding: 0.25rem 0.5rem; border-radius: 4px; cursor: pointer;
+    }
+    .undelivered-btn:hover { background: #c82333; }
+    .filter-delivery {
+      padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;
+    }
+    .user-info-container {
+      position: absolute; top: 1rem; right: 1rem; display: flex; align-items: center; gap: 0.5rem; color: #d1d5db;
+    }
+    .user-info {
+      font-size: 0.9rem; font-weight: 500;
+    }
+    .logout-btn {
+      background: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;
+    }
+    .logout-btn:hover { background: #c82333; }
+    .overflow-x-auto {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      min-width: 100px;
+    }
+    .delivery-time-input {
+      width: 120px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;
+    }
+    .show-password-container {
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;
+    }
+    @media (max-width: 768px) {
+      .main-content { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .products { justify-content: center; }
+      .nav-search-container { width: 100%; justify-content: center; }
+      #nav-search-input { width: 100%; max-width: none; }
+      .user-info-container { position: static; margin-top: 1rem; justify-content: center; }
+      .create-owner-container { flex-direction: column; }
+      #owner-name, #owner-email, #owner-phone { max-width: none; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; flex-direction: column; width: 100%; }
+      .nav-links.active { display: flex; }
+      .hamburger { display: block; }
+      .product, #cart, #confirmed-orders { max-width: 100%; }
+      .nav-search-container { flex-direction: column; }
+      .nav-search-btn, .clear-search-btn { width: 100%; }
+      .user-info-container { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>EasyShopping</h1>
+    <div class="user-info-container" id="user-info-container"></div>
+    <nav class="navbar">
+      <div class="hamburger" role="button" aria-label="Toggle navigation menu" aria-expanded="false" tabindex="0" onclick="toggleMenu()" onkeypress="if(event.key === 'Enter') toggleMenu()">
+        <div></div><div></div><div></div>
+      </div>
+      <div class="nav-links" id="nav-links">
+        <a href="#" onclick="navigate('home')" id="nav-home">Home</a>
+        <a href="#" onclick="navigate('products')" id="nav-products">Products</a>
+        <a href="#" onclick="navigate('cart')" id="nav-cart">Cart</a>
+        <a href="#" onclick="navigate('owner')" id="nav-owner" style="display: none;">Owner Panel</a>
+        <div class="nav-search-container">
+          <input id="nav-search-input" type="text" placeholder="Search products..." aria-label="Search products by name, description, or category">
+          <button class="nav-search-btn" onclick="searchProducts()" aria-label="Search products">Search</button>
+          <button class="clear-search-btn" onclick="clearSearch()" aria-label="Clear search">Clear</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div id="content" class="main-content"></div>
+
+  <script>
+    // Safe localStorage operations
+    function safeGetItem(key) {
+      try {
+        return JSON.parse(localStorage.getItem(key));
+      } catch (e) {
+        console.error(`Error reading ${key} from localStorage:`, e);
+        return null;
+      }
+    }
+
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (e) {
+        console.error(`Error writing ${key} to localStorage:`, e);
+        alert('Storage error. Please check your browser settings.');
+      }
+    }
+
+    function sanitizeInput(input) {
+      const div = document.createElement('div');
+      div.textContent = input;
+      return div.innerHTML;
+    }
+
+    // Toggle password visibility
+    function togglePasswordVisibility(inputId) {
+      const passwordInput = document.getElementById(inputId);
+      const showPasswordCheckbox = document.getElementById(`show-${inputId}`);
+      if (passwordInput && showPasswordCheckbox) {
+        passwordInput.type = showPasswordCheckbox.checked ? 'text' : 'password';
+      }
+    }
+
+    // Initialize owners safely
+    const PRIMARY_OWNER_CREDENTIALS = {
+      email: "12302080703007@mbit.edu.in",
+      phone: "7016820211",
+      role: "owner",
+      id: 1,
+      name: "Harisinh",
+      createdAt: new Date().toISOString()
+    };
+
+    const SECONDARY_OWNER_CREDENTIALS = {
+      email: "gohilhari23@gmail.com",
+      phone: "7600951185",
+      role: "owner",
+      id: 4,
+      name: "Hari",
+      createdAt: new Date().toISOString()
+    };
+
+    let owners = safeGetItem('owners') || [PRIMARY_OWNER_CREDENTIALS, SECONDARY_OWNER_CREDENTIALS];
+    safeSetItem('owners', owners);
+
+    let generatedOtp = null;
+
+    let cart = safeGetItem('cart') || [];
+    let confirmedOrders = safeGetItem('confirmedOrders') || [];
+    let users = safeGetItem('users') || [];
+    let allOrders = safeGetItem('orders') || [];
+    let blockedAccounts = safeGetItem('blockedAccounts') || [];
+    let currentUser = safeGetItem('loggedInUser');
+
+    // Initialize deliveryTime for existing orders
+    allOrders = allOrders.map(order => ({ ...order, deliveryTime: order.deliveryTime || 'Not Set' }));
+    confirmedOrders = confirmedOrders.map(order => ({ ...order, deliveryTime: order.deliveryTime || 'Not Set' }));
+    safeSetItem('orders', allOrders);
+    safeSetItem('confirmedOrders', confirmedOrders);
+
+    const productsData = {
+      home: [
+        { name: 'Charger', price: 800, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Charger.jpg", desc: 'Fast-charging adapter compatible with all major smartphones.' },
+        { name: 'Cable', price: 1200, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/cable.jpg", desc: 'Durable USB cable for charging and data transfer.' },
+        { name: 'Pen', price: 1500, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/bluepen.jpeg", desc: 'Smooth-writing ballpoint pen with stylish design.' }
+      ],
+      products: [
+        { name: 'Blue T-Shirt', price: 800, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Blue T-Shirt.jpg", desc: 'Comfortable cotton t-shirt perfect for casual wear.' },
+        { name: 'Red Jacket', price: 1200, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Red Jacket.jpg", desc: 'Warm and stylish red jacket ideal for winter outings.' },
+        { name: 'Black Shoes', price: 1500, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Black Shoes.jpg", desc: 'Durable black shoes designed for comfort and daily use.' }
+      ],
+      stationery: [
+        { name: 'Pencil', price: 5, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/pencil.webp", desc: 'Smooth writing HB pencil perfect for school and drawing.' },
+        { name: 'Pen', price: 10, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/bluepen.jpeg", desc: 'Blue ballpoint pen with long-lasting ink and comfortable grip.' },
+        { name: 'Notebook', price: 150, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Notebook.jpg", desc: '100-page ruled notebook ideal for school or office notes.' },
+        { name: 'Math Book', price: 180, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/TheMathBook.jpg", desc: 'A mathematics workbook for class 10 with solved examples.' },
+        { name: 'Science Book', price: 200, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Sciencebook.jpg", desc: 'Comprehensive science textbook with diagrams and activities.' },
+        { name: 'English Book', price: 170, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/English Book.jpg", desc: 'Grammar and composition book for improving writing skills.' }
+      ],
+      icecream: [
+        { name: 'Vanilla IceCream', price: 10, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Vanilla IceCream.jpg", desc: 'Creamy vanilla ice cream made with real vanilla beans.' },
+        { name: 'Butterscotch IceCream', price: 10, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Butterscotch IceCream.jpg", desc: 'Rich butterscotch ice cream with crunchy toffee bits.' },
+        { name: 'American Nuts IceCream', price: 20, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/American nuts Icecream.jpg", desc: 'Nutty ice cream with roasted almonds and pecans.' },
+        { name: 'Vanilla Corn', price: 10, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Vanilla Corn.jpg", desc: 'Classic vanilla ice cream in a crispy waffle cone.' },
+        { name: 'Butterscotch Corn', price: 20, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Butterscotch IceCorn.jpg", desc: 'Butterscotch ice cream served in a crunchy cone.' },
+        { name: 'American Nuts Corn', price: 20, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/American nuts IceCorn.jpg", desc: 'Nutty ice cream with almonds in a waffle cone.' }
+      ],
+      colddrink: [
+        { name: 'Coca Cola', price: 20, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Coco cola.jpg", desc: 'Refreshing cola drink, perfect for any occasion.' },
+        { name: 'Sprite', price: 10, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Sprite.jpg", desc: 'Crisp lemon-lime soda for a refreshing break.' },
+        { name: 'Frooti', price: 10, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Fruti.jpg", desc: 'Sweet mango-flavored drink for a tropical taste.' }
+      ],
+      accessories: [
+        { name: 'Charger', price: 800, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/Charger.jpg", desc: 'Fast-charging adapter compatible with all major smartphones.' },
+        { name: 'Cable', price: 1200, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/cable.jpg", desc: 'Durable USB cable for charging and data transfer.' },
+        { name: 'Pen', price: 1500, image: "C:/Users/Gohil Hari/Documents/Shopping Center/JPEG/bluepen.jpeg", desc: 'Smooth-writing ballpoint pen with stylish design.' }
+      ],
+      other: []
+    };
+
+    function updateUserInfo() {
+      const userInfoContainer = document.getElementById('user-info-container');
+      if (currentUser) {
+        userInfoContainer.innerHTML = `
+          <span class="user-info">${sanitizeInput(currentUser.name)} (${currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)})</span>
+          <button class="logout-btn" onclick="logout()" aria-label="Log out">Logout</button>
+        `;
+      } else {
+        userInfoContainer.innerHTML = '';
+      }
+    }
+
+    function navigate(page) {
+      if (!currentUser && page !== 'login' && page !== 'signup' && page !== 'otp') {
+        alert('Please login first.');
+        renderLogin();
+        return;
+      }
+      if (page === 'owner' && currentUser?.role !== 'owner') {
+        alert('Access denied. Only owners can access this page.');
+        return;
+      }
+      updateNavLinks(page);
+      switch (page) {
+        case 'home': renderHome(); break;
+        case 'products': renderProducts('products'); break;
+        case 'stationery': renderProducts('stationery'); break;
+        case 'icecream': renderProducts('icecream'); break;
+        case 'colddrink': renderProducts('colddrink'); break;
+        case 'accessories': renderProducts('accessories'); break;
+        case 'other': renderProducts('other'); break;
+        case 'cart': renderCart(); break;
+        case 'owner': renderOwnerPanel(); break;
+        case 'login': renderLogin(); break;
+        case 'signup': renderSignup(); break;
+        case 'otp': renderOtp(); break;
+        case 'search': renderSearchResults(); break;
+      }
+      updateUserInfo();
+    }
+
+    function updateNavLinks(activePage) {
+      document.querySelectorAll('.nav-links a').forEach(link => {
+        link.classList.remove('font-bold');
+        if (link.id === `nav-${activePage}`) link.classList.add('font-bold');
+      });
+      document.getElementById('nav-owner').style.display = currentUser?.role === 'owner' ? 'inline' : 'none';
+    }
+
+    function toggleMenu() {
+      const navLinks = document.getElementById('nav-links');
+      const isActive = navLinks.classList.toggle('active');
+      document.querySelector('.hamburger').setAttribute('aria-expanded', isActive);
+    }
+
+    function logout() {
+      localStorage.removeItem('loggedInUser');
+      localStorage.removeItem('pendingOwnerEmail');
+      currentUser = null;
+      navigate('login');
+    }
+
+    function addToCart(name, price) {
+      if (blockedAccounts.some(b => b.id === currentUser.id && b.email === currentUser.email)) {
+        alert('Your account is blocked and cannot add items to cart.');
+        return;
+      }
+      const existingProductIndex = cart.findIndex(item => item.name === name);
+      if (existingProductIndex > -1) {
+        cart[existingProductIndex].quantity += 1;
+      } else {
+        cart.push({ name, price, quantity: 1 });
+      }
+      safeSetItem('cart', cart);
+      alert(`${sanitizeInput(name)} added to cart!`);
+      renderCart();
+    }
+
+    function updateCartItemQuantity(name, increment) {
+      const itemIndex = cart.findIndex(item => item.name === name);
+      if (itemIndex > -1) {
+        if (increment) {
+          cart[itemIndex].quantity += 1;
+        } else {
+          cart[itemIndex].quantity -= 1;
+          if (cart[itemIndex].quantity <= 0) {
+            cart.splice(itemIndex, 1);
+          }
+        }
+        safeSetItem('cart', cart);
+        renderCart();
+      }
+    }
+
+    function renderHome() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="products">
+          ${productsData.home.map(product => `
+            <div class="product">
+              <img src="${sanitizeInput(product.image)}" alt="${sanitizeInput(product.name)} product image" onError="this.src='/images/fallback.jpg'" />
+              <h3>${sanitizeInput(product.name)}</h3>
+              <p class="text-sm text-gray-700 mb-1">${sanitizeInput(product.desc)}</p>
+              <p>₹ ${product.price.toFixed(2)}</p>
+              <button onclick="addToCart('${sanitizeInput(product.name)}', ${product.price})" aria-label="Add ${sanitizeInput(product.name)} to cart">Add to Cart</button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderProducts(category) {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <aside class="sidebar">
+          <h2>Categories</h2>
+          <ul>
+            <li><a href="#" onclick="navigate('products')" ${category === 'products' ? 'class="font-bold"' : ''}>Home</a></li>
+            <li><a href="#" onclick="navigate('stationery')" ${category === 'stationery' ? 'class="font-bold"' : ''}>Stationery</a></li>
+            <li><a href="#" onclick="navigate('icecream')" ${category === 'icecream' ? 'class="font-bold"' : ''}>Ice cream</a></li>
+            <li><a href="#" onclick="navigate('colddrink')" ${category === 'colddrink' ? 'class="font-bold"' : ''}>Cold Drink</a></li>
+            <li><a href="#" onclick="navigate('accessories')" ${category === 'accessories' ? 'class="font-bold"' : ''}>Accessories</a></li>
+            <li><a href="#" onclick="navigate('other')" ${category === 'other' ? 'class="font-bold"' : ''}>Others</a></li>
+          </ul>
+        </aside>
+        <div class="products">
+          ${productsData[category].length ? productsData[category].map(product => `
+            <div class="product">
+              <img src="${sanitizeInput(product.image)}" alt="${sanitizeInput(product.name)} product image" onError="this.src='/images/fallback.jpg'" />
+              <h3>${sanitizeInput(product.name)}</h3>
+              <p class="text-sm text-gray-700 mb-1">${sanitizeInput(product.desc)}</p>
+              <p>₹ ${product.price.toFixed(2)}</p>
+              <button onclick="addToCart('${sanitizeInput(product.name)}', ${product.price})" aria-label="Add ${sanitizeInput(product.name)} to cart">Add to Cart</button>
+            </div>
+          `).join('') : '<p>No products available in this category.</p>'}
+        </div>
+      `;
+    }
+
+    function searchProducts() {
+      const searchTerm = document.getElementById('nav-search-input').value.trim();
+      if (!searchTerm) {
+        alert('Please enter a search term.');
+        return;
+      }
+      navigate('search');
+    }
+
+    function renderSearchResults() {
+      const searchTerm = document.getElementById('nav-search-input').value.trim().toLowerCase();
+      const content = document.getElementById('content');
+      const matchedProducts = [];
+
+      Object.keys(productsData).forEach(category => {
+        productsData[category].forEach(product => {
+          if (
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.desc.toLowerCase().includes(searchTerm) ||
+            category.toLowerCase().includes(searchTerm)
+          ) {
+            matchedProducts.push({ ...product, category });
+          }
+        });
+      });
+
+      content.innerHTML = `
+        <div class="products">
+          <h2 class="text-2xl font-semibold text-gray-700 mb-4">Search Results for "${sanitizeInput(searchTerm)}"</h2>
+          ${matchedProducts.length ? matchedProducts.map(product => `
+            <div class="product">
+              <img src="${sanitizeInput(product.image)}" alt="${sanitizeInput(product.name)} product image" onError="this.src='/images/fallback.jpg'" />
+              <h3>${sanitizeInput(product.name)}</h3>
+              <p class="text-sm text-gray-700 mb-1">${sanitizeInput(product.desc)}</p>
+              <p class="text-sm text-gray-500 mb-1">Category: ${sanitizeInput(product.category.charAt(0).toUpperCase() + product.category.slice(1))}</p>
+              <p>₹ ${product.price.toFixed(2)}</p>
+              <button onclick="addToCart('${sanitizeInput(product.name)}', ${product.price})" aria-label="Add ${sanitizeInput(product.name)} to cart">Add to Cart</button>
+            </div>
+          `).join('') : '<p>No products found matching your search.</p>'}
+        </div>
+      `;
+    }
+
+    function clearSearch() {
+      document.getElementById('nav-search-input').value = '';
+      navigate('home');
+    }
+
+    function renderCart() {
+      const content = document.getElementById('content');
+      const userOrders = currentUser?.role === 'customer' ? confirmedOrders.filter(order => order.customerId === currentUser.id) : [];
+      content.innerHTML = `
+        <div id="cart">
+          <h2>Cart</h2>
+          <ul id="cart-items">${cart.length ? cart.map(item => `
+            <li>
+              <span>${sanitizeInput(item.name)} – ₹${item.price.toFixed(2)}</span>
+              <div class="quantity-controls">
+                <button class="quantity-btn" onclick="updateCartItemQuantity('${sanitizeInput(item.name)}', false)" aria-label="Decrease quantity of ${sanitizeInput(item.name)}">−</button>
+                <span>${item.quantity}</span>
+                <button class="quantity-btn" onclick="updateCartItemQuantity('${sanitizeInput(item.name)}', true)" aria-label="Increase quantity of ${sanitizeInput(item.name)}">+</button>
+              </div>
+            </li>
+          `).join('') : 'Your cart is empty.'}</ul>
+          <button id="confirm-btn" onclick="confirmOrder()" ${cart.length ? '' : 'disabled'}>Confirm Order</button>
+        </div>
+        ${currentUser?.role === 'customer' ? `
+          <div id="confirmed-orders">
+            <h2>Order History</h2>
+            <ul id="confirmed-orders-list">${userOrders.length ? userOrders.map(order => `
+              <li><strong>Order ID: ${order.id}</strong><br>
+              ${order.items.map(item => `${sanitizeInput(item.name)} – ₹${item.price.toFixed(2)} x ${item.quantity}`).join('<br>')}
+              <br><strong>Total:</strong> ₹${order.total.toFixed(2)}<br><strong>Date:</strong> ${new Date(order.timestamp).toLocaleString()}<br><strong>Delivery Status:</strong> ${order.deliveryStatus}<br><strong>Est. Delivery:</strong> ${sanitizeInput(order.deliveryTime)}</li>
+            `).join('') : 'No order history yet.'}</ul>
+            ${userOrders.length ? `
+              <div class="mt-4">
+                <button class="download-btn" onclick="downloadAsExcel()">Download Excel</button>
+                <button class="download-btn" onclick="downloadAsPDF()">Download PDF</button>
+                <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+      `;
+    }
+
+    function renderOwnerPanel(searchTerm = '', orderSearchTerm = '', deliveryFilter = 'all') {
+      const isPrimaryOwner = currentUser.email === PRIMARY_OWNER_CREDENTIALS.email;
+      let filteredOrders = orderSearchTerm
+        ? allOrders.filter(order => order.id && order.id.toString().includes(orderSearchTerm))
+        : allOrders;
+      if (deliveryFilter !== 'all') {
+        filteredOrders = filteredOrders.filter(order => order.deliveryStatus.toLowerCase() === deliveryFilter);
+      }
+      const content = document.getElementById('content');
+      let html = `
+        <div id="ownerPanel">
+          <div class="flex justify-center items-center mb-6 space-x-2">
+            <h1 class="text-3xl font-bold text-gray-800">Owner Panel</h1>
+            <div class="flex space-x-2">
+              <button onclick="navigate('cart')" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Back to Cart</button>
+            </div>
+          </div>
+          <div class="mb-10">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">All Customer Orders</h2>
+            <div class="flex items-center justify-center mb-4 space-x-2 flex-wrap">
+              <div class="search-container">
+                <input id="order-search-input" type="text" placeholder="Search by Order ID" value="${sanitizeInput(orderSearchTerm)}" class="border px-3 py-2 rounded shadow-sm" />
+                <button class="search-btn" onclick="searchOrders()">Search</button>
+              </div>
+              <input type="date" id="filterDate" class="border px-3 py-2 rounded shadow-sm" onchange="filterOrdersByDate()" />
+              <select id="delivery-filter" class="filter-delivery" onchange="filterOrdersByDelivery()">
+                <option value="all" ${deliveryFilter === 'all' ? 'selected' : ''}>All Orders</option>
+                <option value="delivered" ${deliveryFilter === 'delivered' ? 'selected' : ''}>Delivered</option>
+                <option value="undelivered" ${deliveryFilter === 'undelivered' ? 'selected' : ''}>Undelivered</option>
+              </select>
+              <button onclick="resetOrderFilter()" class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600">Reset Filters</button>
+            </div>
+            <div class="flex flex-wrap gap-4 mb-4 justify-center">
+              <button onclick="downloadOrdersPDF()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Download Orders PDF</button>
+              <button onclick="downloadOrdersExcel()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Download Orders Excel</button>
+              <button onclick="clearOrders()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Clear All Orders</button>
+            </div>
+            <div class="overflow-x-auto mx-auto max-w-full">
+              <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                <thead class="bg-blue-100 text-gray-800">
+                  <tr>
+                    <th class="px-4 py-2 border">Order ID</th>
+                    <th class="px-4 py-2 border">Customer</th>
+                    <th class="px-4 py-2 border">Items</th>
+                    <th class="px-4 py-2 border">Total ₹</th>
+                    <th class="px-4 py-2 border">Date</th>
+                    <th class="px-4 py-2 border">Delivery Status</th>
+                    <th class="px-4 py-2 border">Est. Delivery Time</th>
+                    <th class="px-4 py-2 border">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersBody" class="text-gray-700 text-sm">
+                  ${renderOrders(filteredOrders)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+      `;
+      if (isPrimaryOwner) {
+        const allAccounts = users.concat(owners);
+        const filteredAccounts = searchTerm
+          ? allAccounts.filter(acc =>
+              (acc.id && acc.id.toString().includes(searchTerm)) ||
+              (acc.email && acc.email.toLowerCase().includes(searchTerm.toLowerCase()))
+            )
+          : allAccounts;
+        html += `
+          <div class="mb-10">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Manage Owners</h2>
+            <div class="create-owner-container">
+              <input id="owner-name" type="text" placeholder="Owner Name" class="border px-3 py-2 rounded shadow-sm" />
+              <input id="owner-email" type="email" placeholder="Owner Email" class="border px-3 py-2 rounded shadow-sm" />
+              <input id="owner-phone" type="tel" placeholder="Owner Phone" class="border px-3 py-2 rounded shadow-sm" />
+              <button class="create-owner-btn" onclick="createOwner()">Create Owner</button>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">Existing Owners</h3>
+            <div class="overflow-x-auto mx-auto max-w-full">
+              <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                <thead class="bg-green-100 text-gray-800">
+                  <tr>
+                    <th class="px-4 py-2 border">Owner ID</th>
+                    <th class="px-4 py-2 border">Name</th>
+                    <th class="px-4 py-2 border">Email</th>
+                    <th class="px-4 py-2 border">Phone</th>
+                    <th class="px-4 py-2 border">Created At</th>
+                    <th class="px-4 py-2 border">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="text-gray-700 text-sm">
+                  ${owners.length ? owners.map(owner => `
+                    <tr>
+                      <td class="border px-4 py-2">${owner.id}</td>
+                      <td class="border px-4 py-2">${sanitizeInput(owner.name)}</td>
+                      <td class="border px-4 py-2">${sanitizeInput(owner.email)}</td>
+                      <td class="border px-4 py-2">${sanitizeInput(owner.phone)}</td>
+                      <td class="border px-4 py-2">${new Date(owner.createdAt).toLocaleString()}</td>
+                      <td class="border px-4 py-2">
+                        ${owner.email !== PRIMARY_OWNER_CREDENTIALS.email ? `
+                          <button class="delete-owner-btn" onclick="deleteOwner('${sanitizeInput(owner.email)}')" aria-label="Delete owner ${sanitizeInput(owner.name)}">Delete</button>
+                          <button class="demote-btn" onclick="demoteToCustomer(${owner.id}, '${sanitizeInput(owner.email)}')">Demote to Customer</button>
+                        ` : '-'}
+                      </td>
+                    </tr>
+                  `).join('') : '<tr><td colspan="6" class="text-center px-4 py-6 text-gray-500">No owners found.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="mb-10">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">All User Accounts (Owners & Customers)</h2>
+            <div class="search-container">
+              <input id="search-input" type="text" placeholder="Search by User ID or Email" value="${sanitizeInput(searchTerm)}" class="border px-3 py-2 rounded shadow-sm" />
+              <button class="search-btn" onclick="searchAccounts()">Search</button>
+            </div>
+            <div class="overflow-x-auto mx-auto max-w-full">
+              <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                <thead class="bg-green-100 text-gray-800">
+                  <tr>
+                    <th class="px-4 py-2 border">User ID</th>
+                    <th class="px-4 py-2 border">Name</th>
+                    <th class="px-4 py-2 border">Email</th>
+                    <th class="px-4 py-2 border">Role</th>
+                    <th class="px-4 py-2 border">Created At</th>
+                    <th class="px-4 py-2 border">Status</th>
+                    <th class="px-4 py-2 border">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="accountsBody" class="text-gray-700 text-sm">
+                  ${filteredAccounts.length ? filteredAccounts.map(acc => `
+                    <tr>
+                      <td class="border px-4 py-2">${acc.id || '-'}</td>
+                      <td class="border px-4 py-2">${sanitizeInput(acc.name) || 'N/A'}</td>
+                      <td class="border px-4 py-2">${sanitizeInput(acc.email) || 'N/A'}</td>
+                      <td class="border px-4 py-2 capitalize">${sanitizeInput(acc.role) || 'N/A'}</td>
+                      <td class="border px-4 py-2">${acc.createdAt ? new Date(acc.createdAt).toLocaleString() : 'N/A'}</td>
+                      <td class="border px-4 py-2">
+                        ${blockedAccounts.some(b => b.id === acc.id && b.email === acc.email) ? 'Blocked' : 'Active'}
+                      </td>
+                      <td class="border px-4 py-2">
+                        ${acc.role === 'customer' ? `
+                          <button class="promote-btn" onclick="promoteToOwner(${acc.id}, '${sanitizeInput(acc.email)}')">Promote to Owner</button>
+                          ${blockedAccounts.some(b => b.id === acc.id && b.email === acc.email) ? 
+                            `<button class="unblock-btn" onclick="unblockAccount(${acc.id}, '${sanitizeInput(acc.email)}')">Unblock</button>` : 
+                            `<button class="block-btn" onclick="blockAccount(${acc.id}, '${sanitizeInput(acc.email)}')">Block</button>`}
+                        ` : (acc.role === 'owner' && acc.email !== PRIMARY_OWNER_CREDENTIALS.email ? `
+                          <button class="demote-btn" onclick="demoteToCustomer(${acc.id}, '${sanitizeInput(acc.email)}')">Demote to Customer</button>
+                        ` : '-')}
+                      </td>
+                    </tr>
+                  `).join('') : '<tr><td colspan="7" class="text-center px-4 py-6 text-gray-500">No accounts found.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function promoteToOwner(id, email) {
+      const phone = prompt('Enter phone number for the new owner (10 digits):');
+      if (!phone || !/^\d{10}$/.test(phone)) {
+        alert('Invalid phone number. Must be 10 digits.');
+        return;
+      }
+      const userIndex = users.findIndex(u => u.id === id && u.email === email);
+      if (userIndex > -1) {
+        const user = users.splice(userIndex, 1)[0];
+        const newOwner = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone,
+          role: 'owner',
+          createdAt: user.createdAt
+        };
+        owners.push(newOwner);
+        blockedAccounts = blockedAccounts.filter(b => !(b.id === id && b.email === email));
+        safeSetItem('blockedAccounts', blockedAccounts);
+        safeSetItem('users', users);
+        safeSetItem('owners', owners);
+        alert(`User ${sanitizeInput(user.name)} promoted to owner.`);
+        renderOwnerPanel(document.getElementById('search-input')?.value || '', document.getElementById('order-search-input')?.value || '', document.getElementById('delivery-filter')?.value || 'all');
+      } else {
+        alert('User not found.');
+      }
+    }
+
+    function demoteToCustomer(id, email) {
+      const password = prompt('Enter new password for the demoted customer (at least 6 characters):');
+      if (!password || password.length < 6) {
+        alert('Password must be at least 6 characters.');
+        return;
+      }
+      const ownerIndex = owners.findIndex(o => o.id === id && o.email === email);
+      if (ownerIndex > -1) {
+        const owner = owners.splice(ownerIndex, 1)[0];
+        const newUser = {
+          id: owner.id,
+          name: owner.name,
+          email: owner.email,
+          password,
+          role: 'customer',
+          createdAt: owner.createdAt
+        };
+        users.push(newUser);
+        safeSetItem('owners', owners);
+        safeSetItem('users', users);
+        alert(`Owner ${sanitizeInput(owner.name)} demoted to customer.`);
+        renderOwnerPanel(document.getElementById('search-input')?.value || '', document.getElementById('order-search-input')?.value || '', document.getElementById('delivery-filter')?.value || 'all');
+      } else {
+        alert('Owner not found.');
+      }
+    }
+
+    function createOwner() {
+      const name = document.getElementById('owner-name').value.trim();
+      const email = document.getElementById('owner-email').value.trim();
+      const phone = document.getElementById('owner-phone').value.trim();
+
+      if (!name || !email || !phone) {
+        alert('Please fill in all fields for the new owner.');
+        return;
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+
+      const phonePattern = /^\d{10}$/;
+      if (!phonePattern.test(phone)) {
+        alert('Please enter a valid 10-digit phone number.');
+        return;
+      }
+
+      if (owners.find(o => o.email === email) || users.find(u => o.email === email)) {
+        alert('An account with this email already exists.');
+        return;
+      }
+
+      const newOwner = {
+        id: owners.length + 1,
+        name,
+        email,
+        phone,
+        role: 'owner',
+        createdAt: new Date().toISOString()
+      };
+      owners.push(newOwner);
+      safeSetItem('owners', owners);
+      alert(`Owner ${sanitizeInput(name)} created successfully!`);
+      document.getElementById('owner-name').value = '';
+      document.getElementById('owner-email').value = '';
+      document.getElementById('owner-phone').value = '';
+      renderOwnerPanel();
+    }
+
+    function deleteOwner(email) {
+      if (email === PRIMARY_OWNER_CREDENTIALS.email) {
+        alert('Cannot delete the primary owner.');
+        return;
+      }
+      if (!confirm(`Are you sure you want to delete the owner with email ${sanitizeInput(email)}?`)) return;
+      owners = owners.filter(o => o.email !== email);
+      safeSetItem('owners', owners);
+      alert(`Owner with email ${sanitizeInput(email)} has been deleted.`);
+      renderOwnerPanel();
+    }
+
+    function searchAccounts() {
+      const searchTerm = document.getElementById('search-input').value.trim();
+      const orderSearchTerm = document.getElementById('order-search-input')?.value.trim() || '';
+      const deliveryFilter = document.getElementById('delivery-filter')?.value || 'all';
+      renderOwnerPanel(searchTerm, orderSearchTerm, deliveryFilter);
+    }
+
+    function searchOrders() {
+      const searchTerm = document.getElementById('search-input')?.value.trim() || '';
+      const orderSearchTerm = document.getElementById('order-search-input').value.trim();
+      const deliveryFilter = document.getElementById('delivery-filter')?.value || 'all';
+      renderOwnerPanel(searchTerm, orderSearchTerm, deliveryFilter);
+    }
+
+    function filterOrdersByDate() {
+      const selected = document.getElementById('filterDate')?.value;
+      const orderSearchTerm = document.getElementById('order-search-input')?.value.trim() || '';
+      const deliveryFilter = document.getElementById('delivery-filter')?.value || 'all';
+      let filtered = allOrders;
+      if (selected) {
+        filtered = filtered.filter(order => new Date(order.timestamp).toISOString().split('T')[0] === selected);
+      }
+      if (orderSearchTerm) {
+        filtered = filtered.filter(order => order.id && order.id.toString().includes(orderSearchTerm));
+      }
+      if (deliveryFilter !== 'all') {
+        filtered = filtered.filter(order => order.deliveryStatus.toLowerCase() === deliveryFilter);
+      }
+      document.getElementById('ordersBody').innerHTML = renderOrders(filtered);
+    }
+
+    function filterOrdersByDelivery() {
+      const deliveryFilter = document.getElementById('delivery-filter').value;
+      const searchTerm = document.getElementById('search-input')?.value.trim() || '';
+      const orderSearchTerm = document.getElementById('order-search-input')?.value.trim() || '';
+      const selectedDate = document.getElementById('filterDate')?.value;
+      let filtered = allOrders;
+      if (deliveryFilter !== 'all') {
+        filtered = filtered.filter(order => order.deliveryStatus.toLowerCase() === deliveryFilter);
+      }
+      if (orderSearchTerm) {
+        filtered = filtered.filter(order => order.id && order.id.toString().includes(orderSearchTerm));
+      }
+      if (selectedDate) {
+        filtered = filtered.filter(order => new Date(order.timestamp).toISOString().split('T')[0] === selectedDate);
+      }
+      document.getElementById('ordersBody').innerHTML = renderOrders(filtered);
+    }
+
+    function resetOrderFilter() {
+      document.getElementById('filterDate').value = '';
+      document.getElementById('order-search-input').value = '';
+      document.getElementById('delivery-filter').value = 'all';
+      renderOwnerPanel(document.getElementById('search-input')?.value || '', '', 'all');
+    }
+
+    function toggleDeliveryStatus(orderId) {
+      const order = allOrders.find(o => o.id === orderId);
+      if (order) {
+        order.deliveryStatus = order.deliveryStatus === 'Delivered' ? 'Undelivered' : 'Delivered';
+        // Set delivery time automatically when marked as Delivered
+        order.deliveryTime = order.deliveryStatus === 'Delivered' ? new Date().toLocaleString() : 'Not Set';
+        const confirmedOrder = confirmedOrders.find(o => o.id === orderId);
+        if (confirmedOrder) {
+          confirmedOrder.deliveryStatus = order.deliveryStatus;
+          confirmedOrder.deliveryTime = order.deliveryTime;
+        }
+        safeSetItem('orders', allOrders);
+        safeSetItem('confirmedOrders', confirmedOrders);
+        const searchTerm = document.getElementById('search-input')?.value.trim() || '';
+        const orderSearchTerm = document.getElementById('order-search-input')?.value.trim() || '';
+        const deliveryFilter = document.getElementById('delivery-filter')?.value || 'all';
+        renderOwnerPanel(searchTerm, orderSearchTerm, deliveryFilter);
+      }
+    }
+
+    function updateDeliveryTime(orderId, deliveryTime) {
+      const order = allOrders.find(o => o.id === orderId);
+      if (!order) return;
+      if (order.deliveryStatus !== 'Delivered') {
+        alert('Delivery time can only be set for delivered orders.');
+        return;
+      }
+      if (!deliveryTime.trim()) {
+        alert('Delivery time cannot be empty.');
+        return;
+      }
+      order.deliveryTime = deliveryTime;
+      const confirmedOrder = confirmedOrders.find(o => o.id === orderId);
+      if (confirmedOrder) {
+        confirmedOrder.deliveryTime = deliveryTime;
+      }
+      safeSetItem('orders', allOrders);
+      safeSetItem('confirmedOrders', confirmedOrders);
+      const searchTerm = document.getElementById('search-input')?.value.trim() || '';
+      const orderSearchTerm = document.getElementById('order-search-input')?.value.trim() || '';
+      const deliveryFilter = document.getElementById('delivery-filter')?.value || 'all';
+      renderOwnerPanel(searchTerm, orderSearchTerm, deliveryFilter);
+    }
+
+    function renderOrders(orders) {
+      if (!Array.isArray(orders) || !orders.length) {
+        return '<tr><td colspan="8" class="text-center px-4 py-6 text-gray-500">No orders found.</td></tr>';
+      }
+      const groupedOrders = orders.reduce((acc, order) => {
+        const dateKey = new Date(order.timestamp).toISOString().split('T')[0];
+        acc[dateKey] = acc[dateKey] || [];
+        acc[dateKey].push(order);
+        return acc;
+      }, {});
+      return Object.keys(groupedOrders)
+        .sort((a, b) => new Date(b) - new Date(a))
+        .map(date => `
+          <tr><td colspan="8" class="bg-gray-200 text-gray-800 font-semibold px-4 py-2 text-center">${new Date(date).toDateString()}</td></tr>
+          ${groupedOrders[date].map(order => `
+            <tr>
+              <td class="border px-4 py-2">${order.id || '-'}</td>
+              <td class="border px-4 py-2">${sanitizeInput(order.customerName || 'N/A')} (${order.customerId || '-'})</td>
+              <td class="border px-4 py-2">${order.items.map(i => `${sanitizeInput(i.name)} x${i.quantity}`).join(', ')}</td>
+              <td class="border px-4 py-2">₹${order.total.toFixed(2)}</td>
+              <td class="border px-4 py-2">${new Date(order.timestamp).toLocaleString()}</td>
+              <td class="border px-4 py-2">${order.deliveryStatus}</td>
+              <td class="border px-4 py-2">
+                <input type="text" class="delivery-time-input" value="${sanitizeInput(order.deliveryTime)}" ${order.deliveryStatus !== 'Delivered' ? 'disabled' : ''} onchange="updateDeliveryTime(${order.id}, this.value)" aria-label="Set delivery time for order ${order.id}" />
+              </td>
+              <td class="border px-4 py-2">
+                <button class="${order.deliveryStatus === 'Delivered' ? 'undelivered-btn' : 'delivery-btn'}" 
+                        onclick="toggleDeliveryStatus(${order.id})" 
+                        aria-label="${order.deliveryStatus === 'Delivered' ? 'Mark as Undelivered' : 'Mark as Delivered'}">
+                  ${order.deliveryStatus === 'Delivered' ? 'Undelivered' : 'Delivered'}
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        `).join('');
+    }
+
+    function renderLogin() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="bg-white p-8 rounded-lg shadow-md w-80 mx-auto mt-10">
+          <h2 class="text-2xl font-bold mb-4 text-center">Login</h2>
+          <input id="email" type="email" placeholder="Email" class="w-full mb-4 p-2 border rounded" aria-label="Email" />
+          <input id="password" type="password" placeholder="Password" class="w-full mb-4 p-2 border rounded" aria-label="Password" />
+          <div class="show-password-container">
+            <input type="checkbox" id="show-password" onclick="togglePasswordVisibility('password')" aria-label="Show password" />
+            <label for="show-password" class="text-sm text-gray-600">Show Password</label>
+          </div>
+          <button onclick="login()" class="bg-blue-500 text-white px-4 py-2 w-full rounded" aria-label="Login">Login</button>
+          <p id="error" class="text-red-500 text-sm mt-2 text-center hidden" role="alert"></p>
+          <p class="text-sm mt-4 text-center">No account? <a href="#" onclick="navigate('signup')" class="text-blue-600">Sign up</a></p>
+        </div>
+      `;
+      updateUserInfo();
+    }
+
+    function renderSignup() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="bg-white p-8 rounded-lg shadow-md w-80 mx-auto mt-10">
+          <h2 class="text-2xl font-bold mb-4 text-center">Sign Up</h2>
+          <input id="name" type="text" placeholder="Name" class="w-full mb-4 p-2 border rounded" aria-label="Name" />
+          <input id="email" type="email" placeholder="Email" class="w-full mb-4 p-2 border rounded" aria-label="Email" />
+          <input id="password" type="password" placeholder="Password" class="w-full mb-4 p-2 border rounded" aria-label="Password" />
+          <div class="show-password-container">
+            <input type="checkbox" id="show-password" onclick="togglePasswordVisibility('password')" aria-label="Show password" />
+            <label for="show-password" class="text-sm text-gray-600">Show Password</label>
+          </div>
+          <input id="confirmPassword" type="password" placeholder="Confirm Password" class="w-full mb-4 p-2 border rounded" aria-label="Confirm Password" />
+          <div class="show-password-container">
+            <input type="checkbox" id="show-confirmPassword" onclick="togglePasswordVisibility('confirmPassword')" aria-label="Show confirm password" />
+            <label for="show-confirmPassword" class="text-sm text-gray-600">Show Confirm Password</label>
+          </div>
+          <button onclick="signup()" class="bg-green-600 text-white px-4 py-2 w-full rounded" aria-label="Sign up">Sign Up</button>
+          <p class="text-sm mt-4 text-center">Already have an account? <a href="#" onclick="navigate('login')" class="text-blue-600">Login</a></p>
+        </div>
+      `;
+      updateUserInfo();
+    }
+
+    function renderOtp() {
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="bg-white p-8 rounded-lg shadow-md w-96 mx-auto mt-10">
+          <h2 class="text-2xl font-bold mb-4 text-center">Owner OTP Verification</h2>
+          <div class="flex gap-2 mb-4">
+            <input id="otp" type="text" placeholder="Enter OTP" class="flex-1 p-2 border rounded" aria-label="OTP" />
+            <button onclick="sendOtp()" class="bg-gray-500 text-white px-3 py-2 rounded" aria-label="Send OTP">Send OTP</button>
+          </div>
+          <button onclick="verifyOtp()" class="bg-blue-500 text-white px-4 py-2 w-full rounded" aria-label="Verify OTP">Verify</button>
+          <p id="error" class="text-red-500 text-sm mt-2 text-center hidden" role="alert"></p>
+        </div>
+      `;
+      updateUserInfo();
+    }
+
+    function showError(msg) {
+      const err = document.getElementById('error');
+      if (err) {
+        err.innerText = msg;
+        err.classList.remove('hidden');
+      }
+    }
+
+    function sendOtp() {
+      const pendingOwnerEmail = localStorage.getItem('pendingOwnerEmail');
+      const owner = owners.find(o => o.email === pendingOwnerEmail);
+      if (!owner) {
+        showError('Owner not found.');
+        return;
+      }
+      generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      console.log(`OTP sent to ${owner.phone}: ${generatedOtp}`);
+      alert(`OTP sent to ${owner.phone}. Check console for demo OTP.`);
+    }
+
+    function verifyOtp() {
+      const otp = document.getElementById('otp').value.trim();
+      if (!otp || otp !== generatedOtp) {
+        showError('Invalid or missing OTP!');
+        return;
+      }
+      const pendingOwnerEmail = localStorage.getItem('pendingOwnerEmail');
+      const owner = owners.find(o => o.email === pendingOwnerEmail);
+      if (!owner) {
+        showError('Owner not found.');
+        return;
+      }
+      localStorage.removeItem('pendingOwnerEmail');
+      currentUser = owner;
+      safeSetItem('loggedInUser', currentUser);
+      alert('Owner login successful!');
+      navigate('owner');
+    }
+
+    function login() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email) {
+        showError('Please enter an email.');
+        return;
+      }
+
+      if (blockedAccounts.some(b => b.email === email)) {
+        showError('This account is blocked. Contact the owner.');
+        return;
+      }
+
+      const owner = owners.find(o => o.email === email);
+      if (owner) {
+        localStorage.setItem('pendingOwnerEmail', email);
+        navigate('otp');
+        return;
+      }
+
+      if (!password) {
+        showError('Please enter a password.');
+        return;
+      }
+
+      const foundUser = users.find(u => u.email === email && u.password === password && u.role === 'customer');
+      if (foundUser) {
+        currentUser = foundUser;
+        safeSetItem('loggedInUser', currentUser);
+        alert('Customer login successful!');
+        navigate('cart');
+      } else {
+        showError('Invalid customer credentials!');
+      }
+    }
+
+    function signup() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!email || !password || !name || !confirmPassword) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+      }
+
+      if (password.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+
+      if (users.find(u => u.email === email) || owners.find(o => o.email === email)) {
+        alert('User already exists!');
+        return;
+      }
+
+      const user = { id: users.length + owners.length + 2, name, email, password, role: 'customer', createdAt: new Date().toISOString() };
+      users.push(user);
+      safeSetItem('users', users);
+      alert('Signup successful! Please login.');
+      navigate('login');
+    }
+
+    function blockAccount(id, email) {
+      if (!confirm(`Are you sure you want to block the account with ID ${id} and email ${sanitizeInput(email)}?`)) return;
+      if (owners.find(o => o.id === id && o.email === email)) {
+        alert('Cannot block an owner account.');
+        return;
+      }
+      blockedAccounts.push({ id, email });
+      safeSetItem('blockedAccounts', blockedAccounts);
+      alert(`Account with ID ${id} and email ${sanitizeInput(email)} has been blocked.`);
+      renderOwnerPanel(document.getElementById('search-input')?.value || '', document.getElementById('order-search-input')?.value || '', document.getElementById('delivery-filter')?.value || 'all');
+    }
+
+    function unblockAccount(id, email) {
+      if (!confirm(`Are you sure you want to unblock the account with ID ${id} and email ${sanitizeInput(email)}?`)) return;
+      blockedAccounts = blockedAccounts.filter(b => !(b.id === id && b.email === email));
+      safeSetItem('blockedAccounts', blockedAccounts);
+      alert(`Account with ID ${id} and email ${sanitizeInput(email)} has been unblocked.`);
+      renderOwnerPanel(document.getElementById('search-input')?.value || '', document.getElementById('order-search-input')?.value || '', document.getElementById('delivery-filter')?.value || 'all');
+    }
+
+    function generateUniqueId() {
+      return Math.floor(1000 + Math.random() * 9000);
+    }
+
+    function confirmOrder() {
+      if (blockedAccounts.some(b => b.id === currentUser.id && b.email === currentUser.email)) {
+        alert('Your account is blocked and cannot place orders.');
+        return;
+      }
+      if (!cart.length) return alert('Your cart is empty.');
+      const orderId = generateUniqueId();
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const order = {
+        id: orderId,
+        items: [...cart],
+        total,
+        timestamp: Date.now(),
+        customerId: currentUser.id,
+        customerName: currentUser.name,
+        deliveryStatus: 'Undelivered',
+        deliveryTime: 'Not Set'
+      };
+      confirmedOrders.push(order);
+      allOrders.push(order);
+      safeSetItem('confirmedOrders', confirmedOrders);
+      safeSetItem('orders', allOrders);
+      alert(`Order Confirmed!\nOrder ID: ${orderId}\nTotal: ₹${total}`);
+      cart = [];
+      safeSetItem('cart', cart);
+      renderCart();
+    }
+
+    function clearOrders() {
+      if (!confirm('Delete all orders?')) return;
+      allOrders = [];
+      confirmedOrders = [];
+      safeSetItem('orders', allOrders);
+      safeSetItem('confirmedOrders', confirmedOrders);
+      alert('Orders cleared.');
+      if (document.getElementById('ordersBody')) {
+        document.getElementById('ordersBody').innerHTML = renderOrders([]);
+      }
+      if (document.getElementById('confirmed-orders-list')) {
+        document.getElementById('confirmed-orders-list').innerHTML = 'No order history yet.';
+      }
+    }
+
+    function getFormattedTimestamp() {
+      const now = new Date();
+      const pad = n => n.toString().padStart(2, '0');
+      return `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    }
+
+    function downloadOrdersExcel() {
+      if (!allOrders.length) return alert('No orders to export.');
+      const rows = [['Order ID', 'Customer', 'Items', 'Total ₹', 'Date', 'Delivery Status', 'Est. Delivery Time']];
+      allOrders.forEach(order => {
+        rows.push([
+          order.id,
+          `${sanitizeInput(order.customerName || 'N/A')} (${order.customerId || '-'})`,
+          order.items.map(i => `${sanitizeInput(i.name)} x${i.quantity}`).join(', '),
+          `₹${order.total.toFixed(2)}`,
+          new Date(order.timestamp).toLocaleString(),
+          order.deliveryStatus,
+          order.deliveryTime
+        ]);
+      });
+      const worksheet = XLSX.utils.aoa_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
+      XLSX.writeFile(workbook, `Customer_Orders_${getFormattedTimestamp()}.xlsx`);
+    }
+
+    function downloadOrdersPDF() {
+      if (!allOrders.length) return alert('No orders to export.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const rows = allOrders.map(order => [
+        order.id,
+        `${sanitizeInput(order.customerName || 'N/A')} (${order.customerId || '-'})`,
+        order.items.map(i => `${sanitizeInput(i.name)} x${i.quantity}`).join(', '),
+        `₹${order.total.toFixed(2)}`,
+        new Date(order.timestamp).toLocaleString(),
+        order.deliveryStatus,
+        order.deliveryTime
+      ]);
+      doc.text('Customer Orders', 14, 16);
+      doc.autoTable({ 
+        head: [['Order ID', 'Customer', 'Items', 'Total', 'Date', 'Delivery Status', 'Est. Delivery Time']], 
+        body: rows, 
+        startY: 20 
+      });
+      doc.save(`Customer_Orders_${getFormattedTimestamp()}.pdf`);
+    }
+
+    function downloadAsExcel() {
+      if (currentUser?.role !== 'customer') return;
+      const userOrders = confirmedOrders.filter(order => order.customerId === currentUser.id);
+      if (!userOrders.length) return alert('No orders to export.');
+      const rows = [['Sr No', 'Order ID', 'Item Name', 'Price', 'Quantity', 'Item Total', 'Order Total', 'Date', 'Delivery Status', 'Est. Delivery Time']];
+      let srNo = 1;
+      userOrders.forEach(order => {
+        order.items.forEach((item, index) => {
+          rows.push([
+            srNo++,
+            order.id,
+            sanitizeInput(item.name),
+            `₹${item.price.toFixed(2)}`,
+            item.quantity,
+            `₹${(item.price * item.quantity).toFixed(2)}`,
+            index === 0 ? `₹${order.total.toFixed(2)}` : '',
+            new Date(order.timestamp).toLocaleString(),
+            index === 0 ? order.deliveryStatus : '',
+            index === 0 ? order.deliveryTime : ''
+          ]);
+        });
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'My Orders');
+      XLSX.writeFile(wb, `My_Orders_${getFormattedTimestamp()}.xlsx`);
+    }
+
+    function downloadAsPDF() {
+      if (currentUser?.role !== 'customer') return;
+      const userOrders = confirmedOrders.filter(order => order.customerId === currentUser.id);
+      if (!userOrders.length) return alert('No orders to export.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const tableHeaders = ['Sr No', 'Order ID', 'Item Name', 'Price', 'Qty', 'Item Total', 'Order Total', 'Date', 'Delivery Status', 'Est. Delivery Time'];
+      let srNo = 1;
+      const tableRows = [];
+      userOrders.forEach(order => {
+        order.items.forEach((item, index) => {
+          tableRows.push([
+            srNo++,
+            order.id,
+            sanitizeInput(item.name),
+            `₹${item.price.toFixed(2)}`,
+            item.quantity,
+            `₹${(item.price * item.quantity).toFixed(2)}`,
+            index === 0 ? `₹${order.total.toFixed(2)}` : '',
+            new Date(order.timestamp).toLocaleString(),
+            index === 0 ? order.deliveryStatus : '',
+            index === 0 ? order.deliveryTime : ''
+          ]);
+        });
+      });
+      doc.setFontSize(16);
+      doc.text('My Orders', 14, 20);
+      doc.autoTable({
+        startY: 30,
+        head: [tableHeaders],
+        body: tableRows,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [0, 123, 255], textColor: 255 }
+      });
+      doc.save(`My_Orders_${getFormattedTimestamp()}.pdf`);
+    }
+
+    function clearHistory() {
+      if (currentUser?.role !== 'customer') return;
+      if (!confirm('Are you sure you want to clear your order history?')) return;
+      const userId = currentUser.id;
+      confirmedOrders = confirmedOrders.filter(order => order.customerId !== userId);
+      allOrders = allOrders.filter(order => order.customerId !== userId);
+      safeSetItem('confirmedOrders', confirmedOrders);
+      safeSetItem('orders', allOrders);
+      renderCart();
+      alert('Your order history cleared.');
+    }
+
+    if (!currentUser) {
+      navigate('login');
+    } else {
+      navigate('home');
+    }
+  </script>
+</body>
+</html>
